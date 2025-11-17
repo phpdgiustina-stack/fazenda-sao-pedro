@@ -1,8 +1,29 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Animal, MedicationAdministration, Raca, Sexo, ComprehensiveReport, MonthlyMedicationUsage, MedicationUsageDetail, DamPerformanceData } from "../types";
 
-// --- REAL GEMINI IMPLEMENTATION ---
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+// --- LAZY, FAULT-TOLERANT INITIALIZATION ---
+// O cliente de IA é inicializado apenas quando necessário pela primeira vez. Isso evita que o aplicativo
+// trave no carregamento se a chave da API (process.env.API_KEY) não estiver disponível
+// no ambiente de execução (por exemplo, durante o desenvolvimento local ou na Netlify).
+let ai: GoogleGenAI | null = null;
+const getAiClient = (): GoogleGenAI => {
+    if (ai) {
+        return ai;
+    }
+    try {
+        const apiKey = process.env.API_KEY;
+        if (!apiKey) {
+            throw new Error("A variável de ambiente API_KEY não foi encontrada.");
+        }
+        ai = new GoogleGenAI({ apiKey });
+        return ai;
+    } catch (e) {
+        console.error("Falha ao inicializar o cliente Gemini:", e);
+        // Lançamos um erro aqui para que a função chamadora possa capturá-lo e mostrar um erro amigável ao usuário.
+        throw new Error("Não foi possível conectar à IA do Gemini. Verifique se a chave de API está configurada corretamente no ambiente de execução.");
+    }
+};
+
 const geminiModel = 'gemini-2.5-flash';
 
 // --- Schemas for structured data extraction ---
@@ -39,8 +60,9 @@ const mockApiCall = <T,>(data: T, delay = 1500): Promise<T> =>
 
 export const structureMedicalDataFromText = async (text: string): Promise<Partial<MedicationAdministration>> => {
   try {
+    const aiClient = getAiClient(); // Initialize on first use
     console.log("Calling Gemini to structure medical text:", text);
-    const response = await ai.models.generateContent({
+    const response = await aiClient.models.generateContent({
       model: geminiModel,
       contents: `Extraia as informações de medicação do seguinte texto: "${text}"`,
       config: {
@@ -54,14 +76,19 @@ export const structureMedicalDataFromText = async (text: string): Promise<Partia
 
   } catch (error) {
     console.error("Error structuring medical data with Gemini:", error);
+     // Propaga uma mensagem de erro mais amigável
+    if (error instanceof Error && error.message.includes("Não foi possível conectar")) {
+        throw error;
+    }
     throw new Error("A IA não conseguiu processar o comando de medicação.");
   }
 };
 
 export const structureAnimalDataFromText = async (text: string): Promise<Partial<Omit<Animal, 'id' | 'fotos' | 'historicoSanitario' | 'historicoPesagens'>>> => {
   try {
+    const aiClient = getAiClient(); // Initialize on first use
     console.log("Calling Gemini to structure animal registration text:", text);
-    const response = await ai.models.generateContent({
+    const response = await aiClient.models.generateContent({
       model: geminiModel,
       contents: `Extraia as informações de registro do animal do seguinte texto: "${text}"`,
       config: {
@@ -82,6 +109,10 @@ export const structureAnimalDataFromText = async (text: string): Promise<Partial
 
   } catch (error) {
     console.error("Error structuring animal data with Gemini:", error);
+    // Propaga uma mensagem de erro mais amigável
+    if (error instanceof Error && error.message.includes("Não foi possível conectar")) {
+        throw error;
+    }
     throw new Error("A IA não conseguiu processar o comando de registro de animal.");
   }
 };
