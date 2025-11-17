@@ -12,7 +12,7 @@ const medicationSchema = {
         medicamento: { type: Type.STRING, description: 'Nome do medicamento' },
         dose: { type: Type.NUMBER, description: 'Dosagem numérica' },
         unidade: { type: Type.STRING, description: 'Unidade da dose (ml, mg, dose)', enum: ['ml', 'mg', 'dose'] },
-        motivo: { type: Type.STRING, description: 'Motivo da aplicação' },
+        motivo: { type: Type.STRING, description: 'Motivo da aplicação' }
     },
 };
 
@@ -26,7 +26,7 @@ const animalSchema = {
         dataNascimento: { type: Type.STRING, description: 'Data de nascimento no formato AAAA-MM-DD' },
         pesoKg: { type: Type.NUMBER, description: 'Peso do animal em quilogramas' },
         maeNome: { type: Type.STRING, description: 'Nome ou brinco da mãe' },
-        paiNome: { type: Type.STRING, description: 'Nome ou brinco do pai' },
+        paiNome: { type: Type.STRING, description: 'Nome ou brinco do pai' }
     },
 };
 

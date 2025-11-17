@@ -107,7 +107,7 @@ const initialFormData: AnimalFormData = {
     status: AnimalStatus.Ativo,
     paiNome: '',
     maeNome: '',
-    maeRaca: Raca.Braford,
+    maeRaca: Raca.Braford
 };
 
 const AddAnimalModal: React.FC<AddAnimalModalProps> = ({ isOpen, onClose, onAddAnimal, animals }) => {
@@ -222,8 +222,9 @@ const AddAnimalModal: React.FC<AddAnimalModalProps> = ({ isOpen, onClose, onAddA
         <Modal isOpen={isOpen} onClose={onClose} title="Cadastrar Novo Animal">
             <AudioForAnimalAdd onDataExtracted={handleDataExtracted} />
             <form onSubmit={handleSubmit} className="space-y-6">
-                 <fieldset className="border border-base-700 p-4 rounded-lg">
-                    <legend className="text-md font-semibold text-brand-primary-light px-2">Identificação do Animal</legend>
+                 {/* FIX: Replaced fieldset with a styled div to fix compilation error */}
+                 <div className="relative border border-base-700 p-4 rounded-lg">
+                    <h3 className="absolute -top-3 left-4 bg-base-800 px-2 text-md font-semibold text-brand-primary-light">Identificação do Animal</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                         <div>
                             <label htmlFor="brinco" className="block text-sm font-medium text-gray-300">Brinco</label>
@@ -247,10 +248,11 @@ const AddAnimalModal: React.FC<AddAnimalModalProps> = ({ isOpen, onClose, onAddA
                             </select>
                         </div>
                     </div>
-                </fieldset>
+                </div>
 
-                <fieldset className="border border-base-700 p-4 rounded-lg">
-                    <legend className="text-md font-semibold text-brand-primary-light px-2">Dados de Nascimento</legend>
+                {/* FIX: Replaced fieldset with a styled div to fix compilation error */}
+                <div className="relative border border-base-700 p-4 rounded-lg">
+                    <h3 className="absolute -top-3 left-4 bg-base-800 px-2 text-md font-semibold text-brand-primary-light">Dados de Nascimento</h3>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                          <div>
                             <label htmlFor="dataNascimento" className="block text-sm font-medium text-gray-300">Data de Nascimento</label>
@@ -263,10 +265,11 @@ const AddAnimalModal: React.FC<AddAnimalModalProps> = ({ isOpen, onClose, onAddA
                             {errors.pesoKg && <p className="text-red-400 text-xs mt-1">{errors.pesoKg}</p>}
                         </div>
                     </div>
-                </fieldset>
+                </div>
                 
-                <fieldset className="border border-base-700 p-4 rounded-lg">
-                    <legend className="text-md font-semibold text-brand-primary-light px-2">Filiação</legend>
+                {/* FIX: Replaced fieldset with a styled div to fix compilation error */}
+                <div className="relative border border-base-700 p-4 rounded-lg">
+                    <h3 className="absolute -top-3 left-4 bg-base-800 px-2 text-md font-semibold text-brand-primary-light">Filiação</h3>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                         <div>
                             <label htmlFor="maeNome" className="block text-sm font-medium text-gray-300">Brinco da Mãe</label>
@@ -283,17 +286,18 @@ const AddAnimalModal: React.FC<AddAnimalModalProps> = ({ isOpen, onClose, onAddA
                             <input type="text" name="paiNome" id="paiNome" value={formData.paiNome} onChange={handleChange} className="mt-1 block w-full bg-base-700 border-base-600 rounded-md shadow-sm focus:ring-brand-primary focus:border-brand-primary sm:text-sm p-2" />
                         </div>
                     </div>
-                </fieldset>
+                </div>
 
-                <fieldset className="border border-base-700 p-4 rounded-lg">
-                    <legend className="text-md font-semibold text-brand-primary-light px-2">Status Inicial</legend>
+                {/* FIX: Replaced fieldset with a styled div to fix compilation error */}
+                <div className="relative border border-base-700 p-4 rounded-lg">
+                    <h3 className="absolute -top-3 left-4 bg-base-800 px-2 text-md font-semibold text-brand-primary-light">Status Inicial</h3>
                      <div className="pt-2">
                         <label htmlFor="status" className="block text-sm font-medium text-gray-300">Status</label>
                         <select name="status" id="status" value={formData.status} onChange={handleChange} className="mt-1 block w-full bg-base-700 border-base-600 rounded-md shadow-sm focus:ring-brand-primary focus:border-brand-primary sm:text-sm p-2">
                              {Object.values(AnimalStatus).map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
                     </div>
-                </fieldset>
+                </div>
                 
                 <div className="pt-4 flex justify-end">
                     <button type="button" onClick={onClose} className="bg-base-700 text-gray-300 hover:bg-base-600 font-bold py-2 px-4 rounded transition-colors mr-2">

@@ -17,12 +17,11 @@ const RootComponent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // If auth is null, it means Firebase wasn't configured correctly.
-    // We don't need to proceed with authentication attempts.
+    // If auth is null, it means Firebase wasn't configured correctly or failed to initialize.
     if (!auth) {
         setError(
-            "A chave de API do Firebase é inválida. " +
-            "Você precisa substituir o placeholder 'YOUR_API_KEY' pela sua chave de API real."
+            "A configuração do Firebase é inválida ou está ausente. " +
+            "O aplicativo não pode se conectar ao banco de dados."
         );
         setLoading(false);
         return;
@@ -35,20 +34,13 @@ const RootComponent: React.FC = () => {
         // The onAuthStateChanged listener below will handle setting the user state.
       } catch (authError: any) { // Using `any` to safely access `code` property
         console.error("Anonymous sign-in failed:", authError);
-        // FIX: Add specific error handling for invalid API keys. This is a common
-        // first-time setup error that needs clear instructions for the user.
-        if (authError.code === 'auth/api-key-not-valid') {
-            setError(
-                "A chave de API do Firebase é inválida. " +
-                "Você precisa substituir o placeholder 'YOUR_API_KEY' pela sua chave de API real."
-            );
-        } else if (authError.code === 'auth/admin-restricted-operation' || authError.code === 'auth/operation-not-allowed') {
+        if (authError.code === 'auth/admin-restricted-operation' || authError.code === 'auth/operation-not-allowed') {
             setError(
                 "A autenticação anônima não está ativada no seu projeto Firebase. " +
                 "Para que o aplicativo funcione, você precisa habilitar este método de login."
             );
         } else {
-            setError("Não foi possível autenticar com o servidor. Verifique sua conexão e tente recarregar a página.");
+            setError("Não foi possível autenticar com o servidor. Verifique sua conexão e a configuração do Firebase.");
         }
         setLoading(false);
       }
@@ -87,12 +79,10 @@ const RootComponent: React.FC = () => {
   }
 
   if (error || !user) {
-    // FIX: Differentiate between different configuration errors to provide
-    // the correct, actionable instructions to the user. The API key error
-    // should be prioritized as it happens before other auth issues.
-    const isApiKeyError = error?.includes("chave de API do Firebase é inválida");
-    const isAnonAuthError = error?.includes("autênticação anônima não está ativada");
-    const isConfigError = isApiKeyError || isAnonAuthError;
+    // FIX: Corrected typo 'autênticação' to 'autênticação' to match the error message string.
+    const isConfigError = error?.includes("configuração do Firebase é inválida") || error?.includes("autenticação anônima não está ativada");
+    const isAnonAuthError = error?.includes("autenticação anônima não está ativada");
+    const isFirebaseConfigError = error?.includes("configuração do Firebase é inválida");
 
     return (
       <div className="min-h-screen bg-base-900 flex flex-col justify-center items-center text-white p-8 text-center">
@@ -103,26 +93,38 @@ const RootComponent: React.FC = () => {
             {error || "Ocorreu um erro inesperado. Por favor, recarregue a página."}
         </p>
         {isConfigError && (
-            <div className="mt-6 bg-base-800 p-6 rounded-lg text-left max-w-2xl w-full">
+            <div className="mt-6 bg-base-800 p-6 rounded-lg text-left max-w-3xl w-full">
                 <p className="font-bold text-lg mb-2">Como resolver:</p>
-                {isApiKeyError ? (
-                    <ol className="list-decimal list-inside space-y-2 text-base-200">
-                        <li>Abra o arquivo <code className="bg-base-700 px-1 rounded text-sm">index.html</code> no editor.</li>
-                        <li>Encontre a seção de configuração do Firebase (procure por <code className="bg-base-700 px-1 rounded text-sm">window.__FIREBASE_CONFIG__</code>).</li>
-                        <li>Substitua o valor de <code className="bg-base-700 px-1 rounded text-sm">apiKey</code>, que atualmente é <code className="bg-base-700 px-1 rounded text-sm text-red-400">"YOUR_API_KEY"</code>, pela sua chave de API real do seu projeto Firebase.</li>
-                        <li>Salve o arquivo e <strong className="text-base-100">recarregue esta página</strong>.</li>
-                    </ol>
-                ) : isAnonAuthError ? (
-                    <ol className="list-decimal list-inside space-y-2 text-base-200">
-                        <li>Acesse o <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="text-brand-primary-light underline hover:text-brand-primary">Console do Firebase</a>.</li>
-                        <li>Selecione o seu projeto.</li>
-                        <li>No menu à esquerda, vá para <strong className="text-base-100">Authentication</strong> (na seção Compilação).</li>
-                        <li>Clique na aba <strong className="text-base-100">Sign-in method</strong> (ou "Método de login").</li>
-                        <li>Encontre <strong className="text-base-100">Anônimo</strong> na lista de provedores e clique no ícone de lápis para editar.</li>
-                        <li>Ative o provedor e clique em <strong className="text-base-100">Salvar</strong>.</li>
-                        <li>Após salvar, <strong className="text-base-100">recarregue esta página</strong>.</li>
-                    </ol>
-                ) : null}
+                {/* FIX: Replaced a nested ternary with an IIFE to resolve a "JSX spread child" error. This makes the conditional logic clearer for the JSX parser. */}
+                {(() => {
+                  if (isFirebaseConfigError) {
+                    return (
+                      <ol className="list-decimal list-inside space-y-2 text-base-200">
+                          <li>Acesse o <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="text-brand-primary-light underline hover:text-brand-primary">Console do Firebase</a> e selecione seu projeto.</li>
+                          <li>Clique no ícone de engrenagem (⚙️) e vá para <strong className="text-base-100">Configurações do Projeto</strong>.</li>
+                          <li>Na aba "Geral", role para baixo até a seção "Seus apps".</li>
+                          <li>Selecione seu app da Web e na seção "SDK setup and configuration", escolha a opção <strong className="text-base-100">"Config"</strong>.</li>
+                          <li><strong className="text-yellow-300">Copie o objeto de configuração inteiro</strong>, que começa com `const firebaseConfig = { ... }`.</li>
+                          <li>Abra o arquivo <code className="bg-base-700 px-1 rounded text-sm">index.html</code> no seu editor de código.</li>
+                          <li>Encontre o script que define <code className="bg-base-700 px-1 rounded text-sm">window.__FIREBASE_CONFIG__</code> e <strong className="text-yellow-300">substitua o objeto de exemplo INTEIRO</strong> pelo que você copiou do Firebase.</li>
+                          <li>Salve o arquivo e <strong className="text-base-100">recarregue esta página</strong>.</li>
+                      </ol>
+                    );
+                  } else if (isAnonAuthError) {
+                    return (
+                      <ol className="list-decimal list-inside space-y-2 text-base-200">
+                          <li>Acesse o <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="text-brand-primary-light underline hover:text-brand-primary">Console do Firebase</a>.</li>
+                          <li>Selecione o seu projeto.</li>
+                          <li>No menu à esquerda, vá para <strong className="text-base-100">Authentication</strong> (na seção Compilação).</li>
+                          <li>Clique na aba <strong className="text-base-100">Sign-in method</strong> (ou "Método de login").</li>
+                          <li>Encontre <strong className="text-base-100">Anônimo</strong> na lista de provedores e clique no ícone de lápis para editar.</li>
+                          <li>Ative o provedor e clique em <strong className="text-base-100">Salvar</strong>.</li>
+                          <li>Após salvar, <strong className="text-base-100">recarregue esta página</strong>.</li>
+                      </ol>
+                    );
+                  }
+                  return null;
+                })()}
             </div>
         )}
       </div>

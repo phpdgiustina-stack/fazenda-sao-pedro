@@ -50,8 +50,7 @@ const EditAreasListModal: React.FC<EditAreasListModalProps> = ({ isOpen, onClose
 
   const handleSaveAll = () => {
     // 1. Determinar o que mudou comparando o estado de rascunho atual com as 'areas' originais.
-    // Fix: Explicitly type the Map to ensure TypeScript correctly infers its value type, preventing errors on lines 66-67.
-    const originalAreasMap = new Map<string, ManagementArea>(areas.map(a => [a.id, a]));
+    const originalAreasMap = new Map(areas.map(a => [a.id, a]));
     const editableAreaIds = new Set(editableAreas.map(a => a.id));
 
     const idsToDelete = areas

@@ -12,7 +12,7 @@ const AnimalCard: React.FC<AnimalCardProps> = ({ animal, onClick }) => {
   const statusColor = {
     'Ativo': 'bg-green-500',
     'Vendido': 'bg-yellow-500',
-    'Óbito': 'bg-red-500',
+    'Óbito': 'bg-red-500'
   };
 
   return (

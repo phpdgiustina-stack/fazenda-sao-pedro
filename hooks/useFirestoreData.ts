@@ -394,7 +394,7 @@ export const useFirestoreData = (user: AppUser | null) => {
     const deleteAnimal = useCallback(async (animalId: string): Promise<void> => {
         if (!userId) {
             throw new Error("Usuário não autenticado.");
-        };
+        }
         
         const animalToDelete = state.animals.find(a => a.id === animalId);
         dispatch({ type: 'LOCAL_DELETE_ANIMAL', payload: { animalId } });
@@ -560,6 +560,6 @@ export const useFirestoreData = (user: AppUser | null) => {
         deleteTask,
         addOrUpdateManagementArea,
         deleteManagementArea,
-        assignAnimalsToArea,
+        assignAnimalsToArea
     };
 };
