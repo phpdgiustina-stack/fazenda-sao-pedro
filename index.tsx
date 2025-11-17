@@ -17,6 +17,17 @@ const RootComponent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // If auth is null, it means Firebase wasn't configured correctly.
+    // We don't need to proceed with authentication attempts.
+    if (!auth) {
+        setError(
+            "A chave de API do Firebase é inválida. " +
+            "Você precisa substituir o placeholder 'YOUR_API_KEY' pela sua chave de API real."
+        );
+        setLoading(false);
+        return;
+    }
+
     // This function attempts to sign in the user anonymously.
     const signInAnonymously = async () => {
       try {
@@ -80,7 +91,7 @@ const RootComponent: React.FC = () => {
     // the correct, actionable instructions to the user. The API key error
     // should be prioritized as it happens before other auth issues.
     const isApiKeyError = error?.includes("chave de API do Firebase é inválida");
-    const isAnonAuthError = error?.includes("autenticação anônima não está ativada");
+    const isAnonAuthError = error?.includes("autênticação anônima não está ativada");
     const isConfigError = isApiKeyError || isAnonAuthError;
 
     return (
