@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -79,10 +80,41 @@ const RootComponent: React.FC = () => {
   }
 
   if (error || !user) {
-    // FIX: Corrected typo 'autênticação' to 'autênticação' to match the error message string.
-    const isConfigError = error?.includes("configuração do Firebase é inválida") || error?.includes("autenticação anônima não está ativada");
     const isAnonAuthError = error?.includes("autenticação anônima não está ativada");
     const isFirebaseConfigError = error?.includes("configuração do Firebase é inválida");
+    const isConfigError = isAnonAuthError || isFirebaseConfigError;
+
+    const renderErrorDetails = () => {
+        if (isFirebaseConfigError) {
+            return (
+              <ol className="list-decimal list-inside space-y-2 text-base-200">
+                  <li>Acesse o <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="text-brand-primary-light underline hover:text-brand-primary">Console do Firebase</a> e selecione seu projeto.</li>
+                  <li>Clique no ícone de engrenagem (⚙️) e vá para <strong className="text-base-100">Configurações do Projeto</strong>.</li>
+                  <li>Na aba "Geral", role para baixo até a seção "Seus apps".</li>
+                  <li>Selecione seu app da Web e na seção "SDK setup and configuration", escolha a opção <strong className="text-base-100">"Config"</strong>.</li>
+                  {/* FIX: Replaced template literal with escaped curly braces to fix Netlify build error. */}
+                  <li><strong className="text-yellow-300">Copie o objeto de configuração inteiro</strong>, que começa com <code className="bg-base-700 px-1 rounded text-sm">const firebaseConfig = {'{'} ... {'}'}</code>.</li>
+                  <li>Abra o arquivo <code className="bg-base-700 px-1 rounded text-sm">index.html</code> no seu editor de código.</li>
+                  <li>Encontre o script que define <code className="bg-base-700 px-1 rounded text-sm">window.__FIREBASE_CONFIG__</code> e <strong className="text-yellow-300">substitua o objeto de exemplo INTEIRO</strong> pelo que você copiou do Firebase.</li>
+                  <li>Salve o arquivo e <strong className="text-base-100">recarregue esta página</strong>.</li>
+              </ol>
+            );
+        }
+        if (isAnonAuthError) {
+            return (
+              <ol className="list-decimal list-inside space-y-2 text-base-200">
+                  <li>Acesse o <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="text-brand-primary-light underline hover:text-brand-primary">Console do Firebase</a>.</li>
+                  <li>Selecione o seu projeto.</li>
+                  <li>No menu à esquerda, vá para <strong className="text-base-100">Authentication</strong> (na seção Compilação).</li>
+                  <li>Clique na aba <strong className="text-base-100">Sign-in method</strong> (ou "Método de login").</li>
+                  <li>Encontre <strong className="text-base-100">Anônimo</strong> na lista de provedores e clique no ícone de lápis para editar.</li>
+                  <li>Ative o provedor e clique em <strong className="text-base-100">Salvar</strong>.</li>
+                  <li>Após salvar, <strong className="text-base-100">recarregue esta página</strong>.</li>
+              </ol>
+            );
+        }
+        return null;
+    };
 
     return (
       <div className="min-h-screen bg-base-900 flex flex-col justify-center items-center text-white p-8 text-center">
@@ -95,36 +127,7 @@ const RootComponent: React.FC = () => {
         {isConfigError && (
             <div className="mt-6 bg-base-800 p-6 rounded-lg text-left max-w-3xl w-full">
                 <p className="font-bold text-lg mb-2">Como resolver:</p>
-                {/* FIX: Replaced a nested ternary with an IIFE to resolve a "JSX spread child" error. This makes the conditional logic clearer for the JSX parser. */}
-                {(() => {
-                  if (isFirebaseConfigError) {
-                    return (
-                      <ol className="list-decimal list-inside space-y-2 text-base-200">
-                          <li>Acesse o <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="text-brand-primary-light underline hover:text-brand-primary">Console do Firebase</a> e selecione seu projeto.</li>
-                          <li>Clique no ícone de engrenagem (⚙️) e vá para <strong className="text-base-100">Configurações do Projeto</strong>.</li>
-                          <li>Na aba "Geral", role para baixo até a seção "Seus apps".</li>
-                          <li>Selecione seu app da Web e na seção "SDK setup and configuration", escolha a opção <strong className="text-base-100">"Config"</strong>.</li>
-                          <li><strong className="text-yellow-300">Copie o objeto de configuração inteiro</strong>, que começa com `const firebaseConfig = { ... }`.</li>
-                          <li>Abra o arquivo <code className="bg-base-700 px-1 rounded text-sm">index.html</code> no seu editor de código.</li>
-                          <li>Encontre o script que define <code className="bg-base-700 px-1 rounded text-sm">window.__FIREBASE_CONFIG__</code> e <strong className="text-yellow-300">substitua o objeto de exemplo INTEIRO</strong> pelo que você copiou do Firebase.</li>
-                          <li>Salve o arquivo e <strong className="text-base-100">recarregue esta página</strong>.</li>
-                      </ol>
-                    );
-                  } else if (isAnonAuthError) {
-                    return (
-                      <ol className="list-decimal list-inside space-y-2 text-base-200">
-                          <li>Acesse o <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="text-brand-primary-light underline hover:text-brand-primary">Console do Firebase</a>.</li>
-                          <li>Selecione o seu projeto.</li>
-                          <li>No menu à esquerda, vá para <strong className="text-base-100">Authentication</strong> (na seção Compilação).</li>
-                          <li>Clique na aba <strong className="text-base-100">Sign-in method</strong> (ou "Método de login").</li>
-                          <li>Encontre <strong className="text-base-100">Anônimo</strong> na lista de provedores e clique no ícone de lápis para editar.</li>
-                          <li>Ative o provedor e clique em <strong className="text-base-100">Salvar</strong>.</li>
-                          <li>Após salvar, <strong className="text-base-100">recarregue esta página</strong>.</li>
-                      </ol>
-                    );
-                  }
-                  return null;
-                })()}
+                {renderErrorDetails()}
             </div>
         )}
       </div>

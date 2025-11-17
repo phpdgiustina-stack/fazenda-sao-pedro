@@ -73,9 +73,8 @@ const ReproductiveReportDisplay: React.FC<ReproductiveReportDisplayProps> = ({ d
         <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
             <button onClick={() => requestSort(sortKey)} className="flex items-center gap-1">
                 {label}
-                {isSorted ? (
-                    sortConfig.direction === 'asc' ? <ChevronUpIcon className="w-3 h-3"/> : <ChevronDownIcon className="w-3 h-3"/>
-                ) : null}
+                {isSorted && sortConfig.direction === 'asc' && <ChevronUpIcon className="w-3 h-3" />}
+                {isSorted && sortConfig.direction === 'desc' && <ChevronDownIcon className="w-3 h-3" />}
             </button>
         </th>
     )
