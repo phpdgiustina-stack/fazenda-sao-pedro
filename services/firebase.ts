@@ -12,11 +12,12 @@ if (!globalFirebase) {
 
 // Your web app's Firebase configuration is read from the window object.
 // This is set in the <script> tag in index.html.
-const firebaseConfig = (window as any).__FIREBASE_CONFIG__;
+const firebaseConfig = (window as any).__FIREBASE_CONFIG__ || {}; // Default to empty object to avoid crashes
 
-if (!firebaseConfig?.apiKey) {
-    // Throwing an error provides a clearer failure mode than just logging.
-    throw new Error("Configuração do Firebase não encontrada em window.__FIREBASE_CONFIG__. Verifique seu arquivo index.html.");
+if (!firebaseConfig?.apiKey || firebaseConfig.apiKey === 'YOUR_API_KEY') {
+    // Log a warning instead of throwing an error. This allows the app's UI
+    // to render and show a more user-friendly error message than a blank screen.
+    console.warn("Configuração do Firebase não encontrada ou incompleta em window.__FIREBASE_CONFIG__. Verifique seu arquivo index.html.");
 }
 
 // Initialize Firebase using the global object.
