@@ -1,13 +1,12 @@
 import React from 'react';
 import { Animal } from '../types';
-import { TrashIcon } from './common/Icons';
 
 interface AnimalCardProps {
   animal: Animal;
   onClick: () => void;
 }
 
-const AnimalCard: React.FC<AnimalCardProps> = ({ animal, onClick }) => {
+const AnimalCard = ({ animal, onClick }: AnimalCardProps) => {
 
   const statusColor = {
     'Ativo': 'bg-green-500',

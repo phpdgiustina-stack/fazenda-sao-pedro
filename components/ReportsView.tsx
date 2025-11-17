@@ -10,7 +10,13 @@ interface ReportsViewProps {
   animals: Animal[];
 }
 
-const ReportsView: React.FC<ReportsViewProps> = ({ animals }) => {
+interface TabButtonProps {
+    tabName: 'sanitary' | 'reproductive' | 'performance';
+    label: string;
+    disabled?: boolean
+}
+
+const ReportsView = ({ animals }: ReportsViewProps) => {
   const [reportData, setReportData] = useState<ComprehensiveReport | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
@@ -45,7 +51,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ animals }) => {
     }
   };
   
-  const TabButton: React.FC<{tabName: 'sanitary' | 'reproductive' | 'performance'; label: string; disabled?: boolean}> = ({tabName, label, disabled}) => (
+  const TabButton = ({tabName, label, disabled}: TabButtonProps) => (
       <button 
         onClick={() => !disabled && setActiveTab(tabName)} 
         disabled={disabled}

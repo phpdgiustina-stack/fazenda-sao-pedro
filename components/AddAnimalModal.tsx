@@ -12,7 +12,7 @@ interface AudioForAnimalAddProps {
   onDataExtracted: (data: Partial<Omit<Animal, 'id' | 'fotos' | 'historicoSanitario' | 'historicoPesagens'>>) => void;
 }
 
-const AudioForAnimalAdd: React.FC<AudioForAnimalAddProps> = ({ onDataExtracted }) => {
+const AudioForAnimalAdd = ({ onDataExtracted }: AudioForAnimalAddProps) => {
   const { isListening, transcript, startListening, stopListening, error: speechError } = useSpeechRecognition();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
@@ -110,7 +110,7 @@ const initialFormData: AnimalFormData = {
     maeRaca: Raca.Braford
 };
 
-const AddAnimalModal: React.FC<AddAnimalModalProps> = ({ isOpen, onClose, onAddAnimal, animals }) => {
+const AddAnimalModal = ({ isOpen, onClose, onAddAnimal, animals }: AddAnimalModalProps) => {
     const [formData, setFormData] = useState<AnimalFormData>(initialFormData);
     const [errors, setErrors] = useState<{ brinco?: string; pesoKg?: string; dataNascimento?: string }>({});
     
@@ -222,7 +222,6 @@ const AddAnimalModal: React.FC<AddAnimalModalProps> = ({ isOpen, onClose, onAddA
         <Modal isOpen={isOpen} onClose={onClose} title="Cadastrar Novo Animal">
             <AudioForAnimalAdd onDataExtracted={handleDataExtracted} />
             <form onSubmit={handleSubmit} className="space-y-6">
-                 {/* FIX: Replaced fieldset with a styled div to fix compilation error */}
                  <div className="relative border border-base-700 p-4 rounded-lg">
                     <h3 className="absolute -top-3 left-4 bg-base-800 px-2 text-md font-semibold text-brand-primary-light">Identificação do Animal</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
@@ -250,7 +249,6 @@ const AddAnimalModal: React.FC<AddAnimalModalProps> = ({ isOpen, onClose, onAddA
                     </div>
                 </div>
 
-                {/* FIX: Replaced fieldset with a styled div to fix compilation error */}
                 <div className="relative border border-base-700 p-4 rounded-lg">
                     <h3 className="absolute -top-3 left-4 bg-base-800 px-2 text-md font-semibold text-brand-primary-light">Dados de Nascimento</h3>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
@@ -267,7 +265,6 @@ const AddAnimalModal: React.FC<AddAnimalModalProps> = ({ isOpen, onClose, onAddA
                     </div>
                 </div>
                 
-                {/* FIX: Replaced fieldset with a styled div to fix compilation error */}
                 <div className="relative border border-base-700 p-4 rounded-lg">
                     <h3 className="absolute -top-3 left-4 bg-base-800 px-2 text-md font-semibold text-brand-primary-light">Filiação</h3>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
@@ -288,7 +285,6 @@ const AddAnimalModal: React.FC<AddAnimalModalProps> = ({ isOpen, onClose, onAddA
                     </div>
                 </div>
 
-                {/* FIX: Replaced fieldset with a styled div to fix compilation error */}
                 <div className="relative border border-base-700 p-4 rounded-lg">
                     <h3 className="absolute -top-3 left-4 bg-base-800 px-2 text-md font-semibold text-brand-primary-light">Status Inicial</h3>
                      <div className="pt-2">

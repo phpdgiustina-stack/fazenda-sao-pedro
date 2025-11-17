@@ -11,7 +11,13 @@ interface ManageAnimalsModalProps {
   allAnimals: Animal[];
 }
 
-const AnimalListItem: React.FC<{ animal: Animal; onToggle: () => void; isAssigned: boolean }> = ({ animal, onToggle, isAssigned }) => (
+interface AnimalListItemProps {
+  animal: Animal;
+  onToggle: () => void;
+  isAssigned: boolean;
+}
+
+const AnimalListItem = ({ animal, onToggle, isAssigned }: AnimalListItemProps) => (
   <div className="flex items-center justify-between p-2 bg-base-900 rounded-md">
     <div>
       <p className="text-sm font-semibold text-white">Brinco: {animal.brinco}</p>
@@ -31,7 +37,7 @@ const AnimalListItem: React.FC<{ animal: Animal; onToggle: () => void; isAssigne
   </div>
 );
 
-const ManageAnimalsModal: React.FC<ManageAnimalsModalProps> = ({ isOpen, onClose, onSave, area, allAnimals }) => {
+const ManageAnimalsModal = ({ isOpen, onClose, onSave, area, allAnimals }: ManageAnimalsModalProps) => {
   const [assignedAnimalIds, setAssignedAnimalIds] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
 

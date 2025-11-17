@@ -20,7 +20,7 @@ type UploadError = {
 type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
 
 
-const ImageAnalyzer: React.FC<ImageAnalyzerProps> = ({ imageUrl, onUploadComplete, animalId, userId }) => {
+const ImageAnalyzer = ({ imageUrl, onUploadComplete, animalId, userId }: ImageAnalyzerProps) => {
   const [previewUrl, setPreviewUrl] = useState<string>(imageUrl);
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle');
   const [uploadProgress, setUploadProgress] = useState(0);

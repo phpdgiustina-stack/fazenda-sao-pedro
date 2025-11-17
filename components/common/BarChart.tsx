@@ -6,7 +6,7 @@ interface BarChartProps {
   title: string;
 }
 
-const BarChart: React.FC<BarChartProps> = ({ data, title }) => {
+const BarChart = ({ data, title }: BarChartProps) => {
   if (!data || data.length === 0) {
     return (
       <div className="bg-base-800 p-4 rounded-lg shadow-md print-bg-visible">
@@ -23,7 +23,7 @@ const BarChart: React.FC<BarChartProps> = ({ data, title }) => {
     'bg-brand-accent-dark',
     'bg-brand-primary-light/80',
     'bg-brand-accent/80',
-    'bg-brand-primary/60',
+    'bg-brand-primary/60'
   ];
 
   return (

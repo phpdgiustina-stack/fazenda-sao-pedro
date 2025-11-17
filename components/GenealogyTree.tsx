@@ -7,7 +7,41 @@ interface GenealogyTreeProps {
   allAnimals: Animal[];
 }
 
-const GenealogyTree: React.FC<GenealogyTreeProps> = ({ animal, allAnimals }) => {
+interface NodeProps {
+    animal?: Animal;
+    name?: string;
+    gender: 'M' | 'F';
+    level: number;
+}
+
+const Node = ({ animal, name, gender, level }: NodeProps) => {
+    const bgColor = level === 0 ? 'bg-brand-primary' : level === 1 ? 'bg-base-700' : 'bg-base-800/50';
+    const textColor = level === 0 ? 'text-white' : 'text-gray-300';
+    const genderColor = gender === 'M' ? 'border-blue-400' : 'border-pink-400';
+
+    return (
+      <div className={`flex-1 min-w-[120px] p-2 rounded-lg text-center ${bgColor} border-b-2 ${genderColor} shadow-md`}>
+        <UserIcon className="w-5 h-5 mx-auto text-gray-400 mb-1" />
+        <p className={`font-bold text-sm ${textColor}`}>{animal?.nome || name || 'Desconhecido'}</p>
+        {animal?.brinco && <p className="text-xs text-gray-400">Brinco: {animal.brinco}</p>}
+      </div>
+    );
+};
+
+interface ConnectorProps {
+    level: number;
+}
+
+const Connector = ({ level }: ConnectorProps) => (
+    <div className={`flex flex-col items-center justify-center ${level === 1 ? 'w-full' : 'w-1/2'}`}>
+        <div className={`w-px h-4 ${level === 1 ? 'bg-base-600' : 'bg-transparent'}`}></div>
+        <ShareIcon className={`w-4 h-4 text-base-600 ${level === 1 ? 'rotate-90' : 'hidden'}`} />
+        <div className={`w-px h-4 ${level === 1 ? 'bg-base-600' : 'bg-transparent'}`}></div>
+    </div>
+);
+
+
+const GenealogyTree = ({ animal, allAnimals }: GenealogyTreeProps) => {
   const findParent = (name?: string): Animal | undefined => {
     if (!name) return undefined;
     return allAnimals.find(a => a.nome?.toLowerCase() === name.toLowerCase() || a.brinco?.toLowerCase() === name.toLowerCase());
@@ -21,28 +55,6 @@ const GenealogyTree: React.FC<GenealogyTreeProps> = ({ animal, allAnimals }) => 
 
   const avoMaterno = mae ? findParent(mae.paiNome) : undefined;
   const avoMaterna = mae ? findParent(mae.maeNome) : undefined;
-
-  const Node: React.FC<{ animal?: Animal; name?: string; gender: 'M' | 'F', level: number }> = ({ animal, name, gender, level }) => {
-    const bgColor = level === 0 ? 'bg-brand-primary' : level === 1 ? 'bg-base-700' : 'bg-base-800/50';
-    const textColor = level === 0 ? 'text-white' : 'text-gray-300';
-    const genderColor = gender === 'M' ? 'border-blue-400' : 'border-pink-400';
-
-    return (
-      <div className={`flex-1 min-w-[120px] p-2 rounded-lg text-center ${bgColor} border-b-2 ${genderColor} shadow-md`}>
-        <UserIcon className="w-5 h-5 mx-auto text-gray-400 mb-1" />
-        <p className={`font-bold text-sm ${textColor}`}>{animal?.nome || name || 'Desconhecido'}</p>
-        {animal?.brinco && <p className="text-xs text-gray-400">Brinco: {animal.brinco}</p>}
-      </div>
-    );
-  };
-
-  const Connector: React.FC<{ level: number }> = ({ level }) => (
-    <div className={`flex flex-col items-center justify-center ${level === 1 ? 'w-full' : 'w-1/2'}`}>
-        <div className={`w-px h-4 ${level === 1 ? 'bg-base-600' : 'bg-transparent'}`}></div>
-        <ShareIcon className={`w-4 h-4 text-base-600 ${level === 1 ? 'rotate-90' : 'hidden'}`} />
-        <div className={`w-px h-4 ${level === 1 ? 'bg-base-600' : 'bg-transparent'}`}></div>
-    </div>
-  );
 
   return (
     <div className="mt-6 p-4 bg-base-900 rounded-lg">

@@ -13,7 +13,7 @@ interface ManagementViewProps {
   onAssignAnimals: (areaId: string, animalIdsToAssign: string[]) => void;
 }
 
-const ManagementView: React.FC<ManagementViewProps> = ({ animals, areas, onSaveArea, onDeleteArea, onAssignAnimals }) => {
+const ManagementView = ({ animals, areas, onSaveArea, onDeleteArea, onAssignAnimals }: ManagementViewProps) => {
     const [isAreaModalOpen, setIsAreaModalOpen] = useState(false);
     const [isManageAnimalsModalOpen, setIsManageAnimalsModalOpen] = useState(false);
     const [isEditListModalOpen, setIsEditListModalOpen] = useState(false);

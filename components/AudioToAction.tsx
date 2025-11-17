@@ -9,7 +9,7 @@ interface AudioToActionProps {
   onDataExtracted: (data: Partial<MedicationAdministration>) => void;
 }
 
-const AudioToAction: React.FC<AudioToActionProps> = ({ onDataExtracted }) => {
+const AudioToAction = ({ onDataExtracted }: AudioToActionProps) => {
   const { isListening, transcript, startListening, stopListening, error: speechError } = useSpeechRecognition();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');

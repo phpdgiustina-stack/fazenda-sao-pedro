@@ -6,7 +6,12 @@ interface ReproductiveReportDisplayProps {
   data: ReproductiveReportData;
 }
 
-const ReproductiveReportDisplay: React.FC<ReproductiveReportDisplayProps> = ({ data }) => {
+interface SortableHeaderProps {
+  sortKey: keyof DamPerformanceData;
+  label: string;
+}
+
+const ReproductiveReportDisplay = ({ data }: ReproductiveReportDisplayProps) => {
   const [sortConfig, setSortConfig] = useState<{ key: keyof DamPerformanceData; direction: 'asc' | 'desc' }>({ key: 'offspringCount', direction: 'desc' });
 
   const sortedDams = useMemo(() => {
@@ -67,7 +72,7 @@ const ReproductiveReportDisplay: React.FC<ReproductiveReportDisplayProps> = ({ d
     setSortConfig({ key, direction });
   };
   
-  const SortableHeader: React.FC<{ sortKey: keyof DamPerformanceData; label: string }> = ({ sortKey, label }) => {
+  const SortableHeader = ({ sortKey, label }: SortableHeaderProps) => {
     const isSorted = sortConfig.key === sortKey;
     return (
         <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">

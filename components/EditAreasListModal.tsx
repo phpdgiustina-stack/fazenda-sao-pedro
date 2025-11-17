@@ -17,7 +17,7 @@ type EditableArea = {
     areaHa: string; // Manter como string para o controlo do input
 }
 
-const EditAreasListModal: React.FC<EditAreasListModalProps> = ({ isOpen, onClose, onSave, onDelete, areas }) => {
+const EditAreasListModal = ({ isOpen, onClose, onSave, onDelete, areas }: EditAreasListModalProps) => {
   const [editableAreas, setEditableAreas] = useState<EditableArea[]>([]);
 
   // Sincronizar com as props quando o modal abre ou os dados das áreas mudam externamente

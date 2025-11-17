@@ -7,7 +7,12 @@ interface SanitaryReportDisplayProps {
   data: SanitaryReportData;
 }
 
-const SanitaryReportDisplay: React.FC<SanitaryReportDisplayProps> = ({ data }) => {
+interface SortableHeaderProps {
+  sortKey: keyof TopTreatedAnimal;
+  label: string;
+}
+
+const SanitaryReportDisplay = ({ data }: SanitaryReportDisplayProps) => {
   const [sortConfig, setSortConfig] = useState<{ key: keyof TopTreatedAnimal; direction: 'asc' | 'desc' }>({ key: 'treatmentCount', direction: 'desc' });
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
   const [expandedMedication, setExpandedMedication] = useState<string | null>(null);
@@ -71,7 +76,7 @@ const SanitaryReportDisplay: React.FC<SanitaryReportDisplayProps> = ({ data }) =
     'bg-brand-primary/60'
   ];
 
-  const SortableHeader: React.FC<{ sortKey: keyof TopTreatedAnimal; label: string }> = ({ sortKey, label }) => {
+  const SortableHeader = ({ sortKey, label }: SortableHeaderProps) => {
     const isSorted = sortConfig.key === sortKey;
     return (
         <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">

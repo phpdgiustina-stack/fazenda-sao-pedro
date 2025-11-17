@@ -8,13 +8,15 @@ interface MobileNavBarProps {
     setCurrentView: (view: ViewType) => void;
 }
 
-const NavButton: React.FC<{
+interface NavButtonProps {
     view: ViewType;
     label: string;
     isActive: boolean;
     onClick: (view: ViewType) => void;
     children: React.ReactNode;
-}> = ({ view, label, isActive, onClick, children }) => (
+}
+
+const NavButton = ({ view, label, isActive, onClick, children }: NavButtonProps) => (
     <button
         onClick={() => onClick(view)}
         className={`flex flex-col items-center justify-center flex-1 py-2 text-xs transition-colors ${
@@ -26,7 +28,7 @@ const NavButton: React.FC<{
     </button>
 );
 
-const MobileNavBar: React.FC<MobileNavBarProps> = ({ currentView, setCurrentView }) => {
+const MobileNavBar = ({ currentView, setCurrentView }: MobileNavBarProps) => {
     return (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-base-800 border-t border-base-700 md:hidden">
             <nav className="flex justify-around items-center h-16">

@@ -9,7 +9,7 @@ interface TasksViewProps {
   onDeleteTask: (taskId: string) => void;
 }
 
-const TasksView: React.FC<TasksViewProps> = ({ tasks, onAddTask, onToggleTask, onDeleteTask }) => {
+const TasksView = ({ tasks, onAddTask, onToggleTask, onDeleteTask }: TasksViewProps) => {
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
 
@@ -24,7 +24,7 @@ const TasksView: React.FC<TasksViewProps> = ({ tasks, onAddTask, onToggleTask, o
   const pendingTasks = tasks.filter(t => !t.isCompleted);
   const completedTasks = tasks.filter(t => t.isCompleted);
 
-  const TaskItem: React.FC<{task: Task}> = ({ task }) => (
+  const TaskItem = ({ task }: { task: Task }) => (
     <div className={`flex items-center p-3 rounded-md transition-colors ${task.isCompleted ? 'bg-base-800/50' : 'bg-base-800'}`}>
         <input 
             type="checkbox" 

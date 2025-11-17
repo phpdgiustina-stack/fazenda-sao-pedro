@@ -6,7 +6,7 @@ interface AgendaPreviewProps {
   events: CalendarEvent[];
 }
 
-const AgendaPreview: React.FC<AgendaPreviewProps> = ({ events }) => {
+const AgendaPreview = ({ events }: AgendaPreviewProps) => {
   const upcomingEvents = React.useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -45,7 +45,7 @@ const AgendaPreview: React.FC<AgendaPreviewProps> = ({ events }) => {
   const typeColors: Record<CalendarEventType, string> = {
     [CalendarEventType.Evento]: 'bg-blue-500',
     [CalendarEventType.Observacao]: 'bg-yellow-500',
-    [CalendarEventType.Compromisso]: 'bg-green-500',
+    [CalendarEventType.Compromisso]: 'bg-green-500'
   };
 
   return (

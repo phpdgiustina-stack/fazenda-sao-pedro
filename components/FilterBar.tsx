@@ -15,7 +15,7 @@ interface FilterBarProps {
   onClear: () => void;
 }
 
-const FilterBar: React.FC<FilterBarProps> = ({
+const FilterBar = ({
   searchTerm,
   setSearchTerm,
   selectedMedication,
@@ -27,7 +27,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
   selectedStatus,
   setSelectedStatus,
   onClear,
-}) => {
+}: FilterBarProps) => {
   return (
     <div className="bg-base-800 p-4 mb-6 rounded-lg shadow-md">
       <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">

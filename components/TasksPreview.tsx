@@ -6,7 +6,7 @@ interface TasksPreviewProps {
   tasks: Task[];
 }
 
-const TasksPreview: React.FC<TasksPreviewProps> = ({ tasks }) => {
+const TasksPreview = ({ tasks }: TasksPreviewProps) => {
   const upcomingTasks = React.useMemo(() => {
     return tasks
       .filter(task => !task.isCompleted)

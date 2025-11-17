@@ -17,7 +17,7 @@ type ChatSession = {
     sendMessage: (message: string) => Promise<string>;
 }
 
-const Chatbot: React.FC<ChatbotProps> = ({ animals }) => {
+const Chatbot = ({ animals }: ChatbotProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [userInput, setUserInput] = useState('');

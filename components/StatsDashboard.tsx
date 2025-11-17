@@ -6,7 +6,14 @@ interface StatsDashboardProps {
   animals: Animal[];
 }
 
-const StatCard: React.FC<{ icon: React.ReactNode; title: string; value: React.ReactNode; subtitle?: string }> = ({ icon, title, value, subtitle }) => (
+interface StatCardProps {
+  icon: React.ReactNode;
+  title: string;
+  value: React.ReactNode;
+  subtitle?: string;
+}
+
+const StatCard = ({ icon, title, value, subtitle }: StatCardProps) => (
     <div className="bg-base-800 p-4 rounded-lg shadow-md flex items-center min-h-[95px]">
         <div className="p-3 rounded-full bg-brand-primary/20 text-brand-primary-light mr-4 self-start">
             {icon}
@@ -26,7 +33,7 @@ interface StatsData {
     femaleCount: number;
 }
 
-const StatsDashboard: React.FC<StatsDashboardProps> = ({ animals }) => {
+const StatsDashboard = ({ animals }: StatsDashboardProps) => {
     const stats = useMemo((): StatsData => {
         if (animals.length === 0) {
             return {

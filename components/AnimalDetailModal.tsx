@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Animal, MedicationAdministration, WeightEntry, Raca, Sexo, AnimalStatus, PregnancyRecord, PregnancyType, OffspringWeightRecord, WeighingType, AbortionRecord, AppUser } from '../types';
 import Modal from './common/Modal';
 import ImageAnalyzer from './ImageAnalyzer';
@@ -45,13 +45,14 @@ type OffspringFormState = {
     yearlingWeightKg: string;
 };
 
-
-const TabButton: React.FC<{
+interface TabButtonProps {
   tabName: TabName;
   label: string;
   activeTab: TabName;
   onClick: (tabName: TabName) => void;
-}> = ({ tabName, label, activeTab, onClick }) => (
+}
+
+const TabButton = ({ tabName, label, activeTab, onClick }: TabButtonProps) => (
     <button 
       onClick={() => onClick(tabName)} 
       className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${activeTab === tabName ? 'bg-base-900 text-brand-primary-light border-b-2 border-brand-primary-light' : 'text-gray-400 hover:text-white'}`}>
@@ -60,13 +61,13 @@ const TabButton: React.FC<{
 );
 
 
-const AnimalDetailModal: React.FC<AnimalDetailModalProps> = ({ 
+const AnimalDetailModal = ({ 
     animal, isOpen, onClose, 
     onUpdateAnimal, 
     onDeleteAnimal,
     animals,
     user
-}) => {
+}: AnimalDetailModalProps) => {
   const [medicationForm, setMedicationForm] = useState<MedicationFormState>({
       medicamento: '',
       dataAplicacao: new Date(),
@@ -439,6 +440,18 @@ const AnimalDetailModal: React.FC<AnimalDetailModalProps> = ({
                       {Object.values(AnimalStatus).map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
+
+                <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-400">Brinco da Mãe</label>
+                        <input type="text" name="maeNome" value={editableAnimal.maeNome || ''} onChange={handleAnimalFormChange} className="bg-base-700 w-full p-1 rounded border border-base-600" disabled={!isEditing}/>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-400">Pai (Brinco ou Nome)</label>
+                        <input type="text" name="paiNome" value={editableAnimal.paiNome || ''} onChange={handleAnimalFormChange} className="bg-base-700 w-full p-1 rounded border border-base-600" disabled={!isEditing}/>
+                    </div>
+                </div>
+
               </div>
             </div>
           </div>

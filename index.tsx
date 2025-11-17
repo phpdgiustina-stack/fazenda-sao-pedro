@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -12,7 +11,7 @@ import { SparklesIcon } from './components/common/Icons';
 // Isso permite que os usuários tenham contas persistentes e acessem seus
 // dados de múltiplos dispositivos.
 
-const GoogleIcon: React.FC = () => (
+const GoogleIcon = () => (
     <svg className="w-5 h-5 mr-3" viewBox="0 0 48 48">
         <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
         <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
@@ -22,19 +21,28 @@ const GoogleIcon: React.FC = () => (
 );
 
 
-const LoginScreen: React.FC<{ onLogin: () => Promise<void> }> = ({ onLogin }) => {
+const LoginScreen = ({ onLogin, initialError }: { onLogin: () => Promise<void>; initialError: string | null }) => {
     const [isLoggingIn, setIsLoggingIn] = useState(false);
-    const [loginError, setLoginError] = useState<string | null>(null);
+    const [loginError, setLoginError] = useState<string | null>(initialError);
+
+    useEffect(() => {
+        setLoginError(initialError);
+    }, [initialError]);
 
     const handleLoginClick = async () => {
         setIsLoggingIn(true);
         setLoginError(null);
         try {
             await onLogin();
-            // On success, the onAuthStateChanged listener will handle the UI transition.
+            // Com o método de redirecionamento, a página irá navegar para o provedor de login.
+            // O spinner será exibido até que a navegação ocorra.
         } catch (error: any) {
-            if (error.code !== 'auth/popup-closed-by-user') {
-                 setLoginError("Falha no login. Por favor, tente novamente.");
+            // Este bloco captura erros que ocorrem *antes* do redirecionamento.
+            if (error.code === 'auth/operation-not-allowed') {
+                setLoginError("Login com Google não está ativado. Por favor, ative-o no seu Console do Firebase em Authentication > Sign-in method.");
+            } else {
+                console.error("Login Error:", error);
+                setLoginError("Falha no login. Verifique o console para mais detalhes ou tente novamente.");
             }
             setIsLoggingIn(false);
         }
@@ -54,19 +62,67 @@ const LoginScreen: React.FC<{ onLogin: () => Promise<void> }> = ({ onLogin }) =>
                     {isLoggingIn ? <Spinner /> : <GoogleIcon />}
                     <span>Entrar com Google</span>
                 </button>
-                {loginError && <p className="text-red-400 mt-4">{loginError}</p>}
+                {loginError && (
+                    <div className="text-red-400 bg-red-900/30 border border-red-400/50 p-3 rounded-md mt-6 max-w-md mx-auto text-sm">
+                        <p className="font-bold">Ocorreu um problema</p>
+                        <p>{loginError}</p>
+                    </div>
+                )}
             </div>
         </div>
     );
 };
 
+// --- VERIFICAÇÃO DE AMBIENTE ---
+// O Firebase Auth (web) depende de duas condições principais do ambiente:
+// 1. Acesso ao Web Storage (localStorage/sessionStorage).
+// 2. Execução sob um protocolo suportado (http:, https:, chrome-extension:).
+// Esta função verifica ambas as condições antes de qualquer tentativa de autenticação.
+const isFirebaseAuthSupported = (): { supported: boolean; reason: string | null } => {
+    // 1. Verificação do Web Storage
+    try {
+        const key = `__firebase_auth_test__`;
+        window.localStorage.setItem(key, 'test');
+        window.localStorage.removeItem(key);
+    } catch (e) {
+        return {
+            supported: false,
+            reason: "O Web Storage do seu navegador está desativado ou não é suportado. O sistema de login precisa dele para funcionar. Verifique as configurações de privacidade do seu navegador ou tente em uma janela normal."
+        };
+    }
 
-const RootComponent: React.FC = () => {
+    // 2. Verificação do Protocolo
+    const supportedProtocols = ['http:', 'https:', 'chrome-extension:'];
+    const currentProtocol = window.location.protocol;
+    if (!supportedProtocols.includes(currentProtocol)) {
+        return {
+            supported: false,
+            reason: `O protocolo do seu ambiente (${currentProtocol}) não é suportado. O aplicativo deve ser executado a partir de um servidor web (http ou https), e não como um arquivo local ('file:').`
+        };
+    }
+
+    return { supported: true, reason: null };
+};
+
+const RootComponent = () => {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [environmentError, setEnvironmentError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loginRedirectError, setLoginRedirectError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
+    // --- 1. Verificação de Ambiente Completa (Storage e Protocolo) ---
+    const envCheck = isFirebaseAuthSupported();
+    if (!envCheck.supported) {
+        setEnvironmentError(envCheck.reason);
+        setLoading(false);
+        return; // Interrompe a execução para evitar mais erros.
+    }
+    
+    // --- 2. Verificação de Configuração do Firebase ---
     if (!auth) {
         setError(
             "A configuração do Firebase é inválida ou está ausente. " +
@@ -76,7 +132,30 @@ const RootComponent: React.FC = () => {
         return;
     }
     
-    const unsubscribe = auth.onAuthStateChanged(firebaseUser => {
+    // --- 3. Fluxo de Autenticação (apenas se o ambiente e a config estiverem OK) ---
+    auth.getRedirectResult()
+        .then((result: any) => {
+            if (isMounted && result && result.user) {
+                // Sucesso. O listener onAuthStateChanged cuidará do resto.
+                setLoginRedirectError(null);
+            }
+        })
+        .catch((error: any) => {
+            if (!isMounted) return;
+            console.error("Erro no login por redirecionamento:", error);
+            if (error.code === 'auth/operation-not-supported-in-this-environment') {
+                 // Este é um erro de ambiente, não apenas um erro de login.
+                 setEnvironmentError(`Ocorreu um erro de ambiente durante o login: ${error.message}. Por favor, verifique se está usando um servidor web e se o armazenamento está ativo.`);
+            } else if (error.code === 'auth/account-exists-with-different-credential') {
+                setLoginRedirectError("Já existe uma conta com este e-mail, mas usando um método de login diferente.");
+            } else {
+                setLoginRedirectError("Ocorreu um erro durante o login. Por favor, tente novamente.");
+            }
+        });
+    
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser: any) => {
+      if (!isMounted) return;
+
       if (firebaseUser) {
         const appUser: AppUser = {
           uid: firebaseUser.uid,
@@ -92,16 +171,74 @@ const RootComponent: React.FC = () => {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+        isMounted = false;
+        unsubscribe();
+    };
   }, []);
   
+  // Utiliza signInWithRedirect para máxima compatibilidade.
   const handleGoogleLogin = async () => {
       if (!auth || !googleProvider) {
           throw new Error("Autenticação não inicializada.");
       }
-      await auth.signInWithPopup(googleProvider);
+      await auth.signInWithRedirect(googleProvider);
   };
 
+  // --- RENDERIZAÇÃO ---
+  
+  const renderEnvironmentErrorSolutions = (errorMsg: string) => {
+      const isProtocolError = errorMsg.includes("protocolo") || errorMsg.includes("file:");
+      const isStorageError = errorMsg.includes("Web Storage");
+
+      if (isProtocolError) {
+          return (
+               <div className="mt-6 bg-base-800 p-6 rounded-lg text-left max-w-3xl w-full">
+                  <p className="font-bold text-lg mb-2">Como Resolver:</p>
+                  <p className="text-base-200">
+                      Este erro geralmente ocorre ao abrir o arquivo <code className="bg-base-700 px-1 rounded text-sm">index.html</code> diretamente no navegador. Para que a autenticação funcione, o aplicativo precisa ser servido por um servidor web.
+                  </p>
+                  <p className="font-bold text-lg mt-4 mb-2">Opção Rápida (com VS Code):</p>
+                  <ol className="list-decimal list-inside space-y-2 text-base-200">
+                    <li>Instale a extensão <strong className="text-base-100">"Live Server"</strong> no Visual Studio Code.</li>
+                    <li>Abra a pasta do projeto no VS Code.</li>
+                    <li>Clique com o botão direito no arquivo <code className="bg-base-700 px-1 rounded text-sm">index.html</code> e selecione <strong className="text-base-100">"Open with Live Server"</strong>.</li>
+                    <li>Uma nova aba do navegador abrirá com o endereço correto (começando com <code className="bg-base-700 px-1 rounded text-sm">http://127.0.0.1...</code>). Use esta nova aba.</li>
+                  </ol>
+              </div>
+          );
+      }
+
+      if (isStorageError) {
+          return (
+               <div className="mt-6 bg-base-800 p-6 rounded-lg text-left max-w-3xl w-full">
+                  <p className="font-bold text-lg mb-2">Possíveis Causas e Soluções:</p>
+                  <ol className="list-decimal list-inside space-y-2 text-base-200">
+                    <li><strong className="text-base-100">Modo de Navegação Privada/Anônima:</strong> Alguns navegadores bloqueiam o armazenamento de dados. Tente usar uma janela normal.</li>
+                    <li><strong className="text-base-100">Configurações do Navegador:</strong> Verifique se as configurações de privacidade (ex: Chrome, Firefox, Safari) não estão bloqueando "cookies e dados de sites de terceiros".</li>
+                    <li><strong className="text-base-100">Extensões de Navegador:</strong> Extensões de bloqueio de anúncios ou de privacidade podem desativar o Web Storage. Tente desativá-las temporariamente.</li>
+                    <li><strong className="text-base-100">Navegador Desatualizado:</strong> Garanta que seu navegador está atualizado para a versão mais recente.</li>
+                </ol>
+              </div>
+          );
+      }
+      
+      return null;
+  }
+
+  if (environmentError) {
+      return (
+        <div className="min-h-screen bg-base-900 flex flex-col justify-center items-center text-white p-8 text-center">
+           <h2 className="text-2xl font-bold text-red-400 mb-4">
+              Ambiente Incompatível
+           </h2>
+          <p className="max-w-2xl">
+              {environmentError}
+          </p>
+          {renderEnvironmentErrorSolutions(environmentError)}
+        </div>
+      );
+  }
 
   if (loading) {
     return (
@@ -143,7 +280,7 @@ const RootComponent: React.FC = () => {
   }
 
   if (!user) {
-      return <LoginScreen onLogin={handleGoogleLogin} />;
+      return <LoginScreen onLogin={handleGoogleLogin} initialError={loginRedirectError} />;
   }
 
   return <App user={user} />;

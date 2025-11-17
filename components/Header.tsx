@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { DocumentChartBarIcon, SparklesIcon, PlusIcon, CalendarDaysIcon, ClipboardDocumentCheckIcon, MapPinIcon } from './common/Icons';
 import { AppUser } from '../types';
@@ -13,8 +12,15 @@ interface HeaderProps {
     user: AppUser;
 }
 
-const Header: React.FC<HeaderProps> = ({ currentView, setCurrentView, onAddAnimalClick, user }) => {
-  const NavButton: React.FC<{view: ViewType, label: string, children: React.ReactNode}> = ({ view, label, children }) => (
+interface NavButtonProps {
+    view: ViewType;
+    label: string;
+    children: React.ReactNode;
+    currentView: ViewType;
+    setCurrentView: (view: ViewType) => void;
+}
+
+const NavButton = ({ view, label, children, currentView, setCurrentView }: NavButtonProps) => (
     <button
       onClick={() => setCurrentView(view)}
       className={`px-3 py-2 flex items-center gap-2 text-sm font-medium rounded-md transition-colors ${
@@ -25,6 +31,8 @@ const Header: React.FC<HeaderProps> = ({ currentView, setCurrentView, onAddAnima
       {label}
     </button>
   );
+
+const Header = ({ currentView, setCurrentView, onAddAnimalClick, user }: HeaderProps) => {
 
   const handleLogout = () => {
     if (auth) {
@@ -42,39 +50,50 @@ const Header: React.FC<HeaderProps> = ({ currentView, setCurrentView, onAddAnima
           </div>
           <div className="flex items-center">
             <nav className="hidden md:flex space-x-1 sm:space-x-2">
-               <NavButton view="dashboard" label="Painel">
+               <NavButton view="dashboard" label="Painel" currentView={currentView} setCurrentView={setCurrentView}>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>
                </NavButton>
-                <NavButton view="management" label="Manejo">
-                  <MapPinIcon className="w-5 h-5"/>
+               <NavButton view="management" label="Manejo" currentView={currentView} setCurrentView={setCurrentView}>
+                  <MapPinIcon className="h-5 w-5" />
                </NavButton>
-                <NavButton view="calendar" label="Agenda">
-                  <CalendarDaysIcon className="w-5 h-5"/>
+               <NavButton view="calendar" label="Agenda" currentView={currentView} setCurrentView={setCurrentView}>
+                  <CalendarDaysIcon className="h-5 w-5" />
                </NavButton>
-                <NavButton view="tasks" label="Tarefas">
-                  <ClipboardDocumentCheckIcon className="w-5 h-5"/>
+               <NavButton view="tasks" label="Tarefas" currentView={currentView} setCurrentView={setCurrentView}>
+                  <ClipboardDocumentCheckIcon className="h-5 w-5" />
                </NavButton>
-               <NavButton view="reports" label="Relatórios">
-                  <DocumentChartBarIcon className="w-5 h-5"/>
+               <NavButton view="reports" label="Relatórios" currentView={currentView} setCurrentView={setCurrentView}>
+                  <DocumentChartBarIcon className="h-5 w-5" />
                </NavButton>
             </nav>
-            <button
-                onClick={onAddAnimalClick}
-                className="ml-4 flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-primary hover:bg-brand-primary-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary-dark focus:ring-offset-base-900 transition-colors"
-                aria-label="Cadastrar Novo Animal"
-            >
-                <PlusIcon className="w-5 h-5" />
-                <span className="hidden sm:inline ml-2">Cadastrar</span>
-            </button>
-             <div className="ml-4 flex items-center">
-                <span className="text-sm text-gray-300 hidden lg:block mr-3">Olá, {user.displayName?.split(' ')[0]}</span>
-                {user.photoURL && (
-                    <img src={user.photoURL} alt="Foto do usuário" className="w-8 h-8 rounded-full" />
-                )}
-                <button onClick={handleLogout} className="ml-3 text-sm text-gray-400 hover:text-white" title="Sair">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
-                    </svg>
+
+            <div className="hidden md:block border-l border-base-600 mx-4 h-8"></div>
+            
+            <div className="hidden md:block">
+                <button onClick={onAddAnimalClick} className="flex items-center gap-2 bg-brand-primary hover:bg-brand-primary-light text-white font-bold py-2 px-4 rounded transition-colors">
+                    <PlusIcon className="w-5 h-5" />
+                    Adicionar Animal
+                </button>
+            </div>
+            
+            <div className="flex items-center ml-4">
+                <div className="relative">
+                    <div className="flex items-center">
+                        <img className="h-8 w-8 rounded-full" src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=374151&color=fff`} alt="User avatar" />
+                        <div className="ml-3 hidden sm:block">
+                            <div className="text-sm font-medium text-white">{user.displayName}</div>
+                        </div>
+                    </div>
+                </div>
+                <button onClick={handleLogout} className="ml-4 text-gray-400 hover:text-white" title="Sair">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                </button>
+            </div>
+
+            {/* Mobile add button */}
+            <div className="md:hidden ml-2">
+                <button onClick={onAddAnimalClick} className="flex-shrink-0 bg-brand-primary p-2 text-white rounded-full hover:bg-brand-primary-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-base-800 focus:ring-white">
+                    <PlusIcon className="h-6 w-6" />
                 </button>
             </div>
           </div>
@@ -84,4 +103,5 @@ const Header: React.FC<HeaderProps> = ({ currentView, setCurrentView, onAddAnima
   );
 };
 
+// FIX: Added default export to make the component importable.
 export default Header;

@@ -7,7 +7,7 @@ interface DashboardProps {
   onSelectAnimal: (animal: Animal) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ animals, onSelectAnimal }) => {
+const Dashboard = ({ animals, onSelectAnimal }: DashboardProps) => {
   if (animals.length === 0) {
     return (
       <div className="text-center py-16 text-gray-500">

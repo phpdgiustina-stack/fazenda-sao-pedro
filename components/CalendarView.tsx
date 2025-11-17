@@ -9,7 +9,29 @@ interface CalendarViewProps {
   onDelete: (eventId: string) => void;
 }
 
-const CalendarView: React.FC<CalendarViewProps> = ({ events, onSave, onDelete }) => {
+interface EventPillProps {
+  event: CalendarEvent;
+}
+
+const EventPill = ({ event }: EventPillProps) => {
+    const typeColors = {
+        [CalendarEventType.Evento]: 'bg-blue-600/80',
+        [CalendarEventType.Observacao]: 'bg-yellow-600/80',
+        [CalendarEventType.Compromisso]: 'bg-green-600/80'
+    };
+
+    // This component will now need access to the function to open the modal
+    // but for simplicity in this refactor, the parent div's onClick is sufficient.
+    // In a more complex app, we'd pass the handler down.
+    return (
+        <div className={`p-1 text-[10px] text-white rounded mb-1 cursor-pointer truncate ${typeColors[event.type]}`}>
+            {event.title}
+        </div>
+    );
+};
+
+
+const CalendarView = ({ events, onSave, onDelete }: CalendarViewProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
@@ -45,19 +67,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ events, onSave, onDelete })
     setSelectedDate(null);
   };
 
-  const EventPill: React.FC<{event: CalendarEvent}> = ({ event }) => {
-      const typeColors = {
-          [CalendarEventType.Evento]: 'bg-blue-600/80',
-          [CalendarEventType.Observacao]: 'bg-yellow-600/80',
-          [CalendarEventType.Compromisso]: 'bg-green-600/80',
-      };
-      return (
-          <div onClick={() => openModalForEdit(event)} className={`p-1 text-[10px] text-white rounded mb-1 cursor-pointer truncate ${typeColors[event.type]}`}>
-              {event.title}
-          </div>
-      )
-  };
-
   return (
     <div>
       <h1 className="text-3xl font-bold text-white mb-6">Agenda</h1>
@@ -79,7 +88,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({ events, onSave, onDelete })
                 <div key={day} className="border border-base-700/50 rounded-md min-h-[100px] p-1 overflow-hidden">
                   <div className="font-bold">{day}</div>
                   <div className="overflow-y-auto max-h-[70px]">
-                    {dayEvents.map(event => <EventPill key={event.id} event={event} />)}
+                    {dayEvents.map(event => 
+                        <div key={event.id} onClick={() => openModalForEdit(event)}>
+                            <EventPill event={event} />
+                        </div>
+                    )}
                   </div>
                    <button onClick={() => openModalForNew(day)} className="mt-1 text-xs text-brand-primary-light hover:underline opacity-50 hover:opacity-100 transition-opacity">+</button>
                 </div>
@@ -102,7 +115,7 @@ interface EventModalProps {
     onDelete: (eventId: string) => void;
 }
 
-const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, event, date, onSave, onDelete }) => {
+const EventModal = ({ isOpen, onClose, event, date, onSave, onDelete }: EventModalProps) => {
     const [formData, setFormData] = useState({ title: '', type: CalendarEventType.Evento, description: '' });
     const [formDate, setFormDate] = useState(new Date());
 

@@ -23,7 +23,7 @@ interface AppProps {
     user: AppUser;
 }
 
-const App: React.FC<AppProps> = ({ user }) => {
+const App = ({ user }: AppProps) => {
   const {
     state,
     addAnimal,
