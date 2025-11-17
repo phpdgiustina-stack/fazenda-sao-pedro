@@ -36,9 +36,9 @@ const initialState: FirestoreState = {
         animals: true,
         calendar: true,
         tasks: true,
-        areas: true,
+        areas: true
     },
-    error: null,
+    error: null
 };
 
 // Helper function to convert Firestore Timestamps to JS Dates in nested objects
@@ -152,12 +152,8 @@ export const useFirestoreData = (user: AppUser | null) => {
     const userId = user?.uid;
 
     useEffect(() => {
-        if (!userId) {
-            // If user logs out, reset to initial state
-            dispatch({ type: 'SET_DATA', payload: { collection: 'animals', data: [] } });
-            dispatch({ type: 'SET_DATA', payload: { collection: 'calendarEvents', data: [] } });
-            dispatch({ type: 'SET_DATA', payload: { collection: 'tasks', data: [] } });
-            dispatch({ type: 'SET_DATA', payload: { collection: 'managementAreas', data: [] } });
+        // If there's no user OR no DB connection, do nothing and set loading to false.
+        if (!userId || !db) {
             Object.keys(initialState.loading).forEach(key => {
                  dispatch({ type: 'SET_LOADING_STATUS', payload: { collection: key as keyof FirestoreState['loading'], status: false } });
             });
@@ -177,8 +173,29 @@ export const useFirestoreData = (user: AppUser | null) => {
         ];
         
         const unsubscribers = collections.map((collectionName) => {
-            const collectionPath = collectionName === 'calendarEvents' ? 'calendar' : collectionName === 'managementAreas' ? 'areas' : collectionName;
-            const q = db.collection(collectionPath).where("userId", "==", userId);
+            let loadingKey: keyof FirestoreState['loading'];
+            let firestorePath: string;
+
+            switch(collectionName) {
+                case 'calendarEvents':
+                    loadingKey = 'calendar';
+                    firestorePath = 'calendar';
+                    break;
+                case 'managementAreas':
+                    loadingKey = 'areas';
+                    firestorePath = 'areas';
+                    break;
+                case 'animals':
+                    loadingKey = 'animals';
+                    firestorePath = 'animals';
+                    break;
+                case 'tasks':
+                    loadingKey = 'tasks';
+                    firestorePath = 'tasks';
+                    break;
+            }
+            
+            const q = db.collection(firestorePath).where("userId", "==", userId);
             
             return q.onSnapshot((querySnapshot) => {
                 const data = querySnapshot.docs.map(doc => {
@@ -228,11 +245,11 @@ export const useFirestoreData = (user: AppUser | null) => {
                     return entity;
                 });
                 dispatch({ type: 'SET_DATA', payload: { collection: collectionName, data } });
-                dispatch({ type: 'SET_LOADING_STATUS', payload: { collection: collectionPath as keyof FirestoreState['loading'], status: false }});
+                dispatch({ type: 'SET_LOADING_STATUS', payload: { collection: loadingKey, status: false }});
             }, (error) => {
                 console.error(`Error fetching ${collectionName}:`, error);
                 dispatch({ type: 'SET_ERROR', payload: `Failed to fetch ${collectionName}` });
-                dispatch({ type: 'SET_LOADING_STATUS', payload: { collection: collectionPath as keyof FirestoreState['loading'], status: false }});
+                dispatch({ type: 'SET_LOADING_STATUS', payload: { collection: loadingKey, status: false }});
             });
         });
         
@@ -242,7 +259,7 @@ export const useFirestoreData = (user: AppUser | null) => {
     }, [userId]);
 
     const addAnimal = useCallback(async (animalData: Omit<Animal, 'id' | 'fotos' | 'historicoSanitario' | 'historicoPesagens'>) => {
-        if (!userId) return;
+        if (!userId || !db) return;
         try {
             const batch = db.batch();
             const newAnimalRef = db.collection('animals').doc();
@@ -303,8 +320,8 @@ export const useFirestoreData = (user: AppUser | null) => {
     }, [userId]);
 
     const updateAnimal = useCallback((animalId: string, updatedData: Partial<Omit<Animal, 'id'>>) => {
-        if (!userId) {
-            console.error("Usuário não autenticado. A atualização foi ignorada.");
+        if (!userId || !db) {
+            console.error("Usuário não autenticado ou BD indisponível. A atualização foi ignorada.");
             return;
         }
     
@@ -368,6 +385,7 @@ export const useFirestoreData = (user: AppUser | null) => {
         }
     
         const writeToDb = async () => {
+            if (!db) return;
             const batch = db.batch();
             const animalRef = db.collection('animals').doc(animalId);
             const sanitizedData = removeUndefined(updatedData);
@@ -392,8 +410,8 @@ export const useFirestoreData = (user: AppUser | null) => {
 
 
     const deleteAnimal = useCallback(async (animalId: string): Promise<void> => {
-        if (!userId) {
-            throw new Error("Usuário não autenticado.");
+        if (!userId || !db) {
+            throw new Error("Usuário não autenticado ou BD indisponível.");
         }
         
         const animalToDelete = state.animals.find(a => a.id === animalId);
@@ -435,7 +453,7 @@ export const useFirestoreData = (user: AppUser | null) => {
 
 
     const addOrUpdateCalendarEvent = useCallback(async (event: Omit<CalendarEvent, 'id'> & { id?: string }) => {
-        if (!userId) return;
+        if (!userId || !db) return;
         try {
             const { id, ...eventData } = event;
             const dataWithTimestamp = convertDatesToTimestamps(eventData);
@@ -450,7 +468,7 @@ export const useFirestoreData = (user: AppUser | null) => {
     }, [userId]);
 
     const deleteCalendarEvent = useCallback(async (eventId: string) => {
-        if (!userId) return;
+        if (!userId || !db) return;
         try {
             await db.collection('calendar').doc(eventId).delete();
         } catch (error) {
@@ -459,7 +477,7 @@ export const useFirestoreData = (user: AppUser | null) => {
     }, [userId]);
 
     const addTask = useCallback(async (task: Omit<Task, 'id' | 'isCompleted'>) => {
-        if (!userId) return;
+        if (!userId || !db) return;
         try {
             const newTask = { ...task, isCompleted: false, userId };
             const dataWithTimestamp = convertDatesToTimestamps(newTask);
@@ -470,7 +488,7 @@ export const useFirestoreData = (user: AppUser | null) => {
     }, [userId]);
 
     const toggleTaskCompletion = useCallback(async (task: Task) => {
-        if (!userId) return;
+        if (!userId || !db) return;
         try {
             await db.collection('tasks').doc(task.id).update({ isCompleted: !task.isCompleted });
         } catch (error) {
@@ -479,7 +497,7 @@ export const useFirestoreData = (user: AppUser | null) => {
     }, [userId]);
 
     const deleteTask = useCallback(async (taskId: string) => {
-        if (!userId) return;
+        if (!userId || !db) return;
         try {
             await db.collection('tasks').doc(taskId).delete();
         } catch (error) {
@@ -488,7 +506,7 @@ export const useFirestoreData = (user: AppUser | null) => {
     }, [userId]);
 
     const addOrUpdateManagementArea = useCallback(async (area: Omit<ManagementArea, 'id'> & { id?: string }) => {
-        if (!userId) return;
+        if (!userId || !db) return;
         try {
             const { id, ...areaData } = area;
             if (id) {
@@ -502,7 +520,7 @@ export const useFirestoreData = (user: AppUser | null) => {
     }, [userId]);
 
     const deleteManagementArea = useCallback(async (areaId: string) => {
-        if (!userId) return;
+        if (!userId || !db) return;
         try {
             const batch = db.batch();
             const animalsInAreaQuery = db.collection('animals').where('userId', '==', userId).where('managementAreaId', '==', areaId);
@@ -519,7 +537,7 @@ export const useFirestoreData = (user: AppUser | null) => {
     }, [userId]);
     
     const assignAnimalsToArea = useCallback(async (areaId: string, animalIdsToAssign: string[]) => {
-        if (!userId) return;
+        if (!userId || !db) return;
         try {
             const batch = db.batch();
             const animalsInAreaQuery = db.collection('animals').where('userId', '==', userId).where('managementAreaId', '==', areaId);

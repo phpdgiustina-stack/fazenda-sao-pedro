@@ -55,6 +55,17 @@ const ImageAnalyzer: React.FC<ImageAnalyzerProps> = ({ imageUrl, onUploadComplet
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    
+    // --- SAFETY CHECK ---
+    // If the storage service isn't available due to a config error, stop immediately.
+    if (!storage) {
+        setError({
+            message: "O serviço de armazenamento (Firebase Storage) não está disponível. Verifique a configuração do Firebase em index.html.",
+            isConfigError: true
+        });
+        setUploadStatus('error');
+        return;
+    }
 
     setError(null);
     setUploadProgress(0);
