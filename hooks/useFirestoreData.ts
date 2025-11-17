@@ -331,81 +331,93 @@ export const useFirestoreData = (user: AppUser | null) => {
             return;
         }
     
-        // --- Iniciar Atualizações Otimistas ---
+        // Start optimistic update for the main animal
         dispatch({ type: 'LOCAL_UPDATE_ANIMAL', payload: { animalId, updatedData } });
     
-        // --- Lógica de Atualização da Progênie (também otimista) ---
-        const latestWeaningWeight = updatedData.historicoPesagens
-            ?.filter(p => p.type === WeighingType.Weaning)
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-
-        const latestYearlingWeight = updatedData.historicoPesagens
-            ?.filter(p => p.type === WeighingType.Yearling)
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-
-        const mother = (latestWeaningWeight || latestYearlingWeight) && animalBeingUpdated.maeNome
-            ? state.animals.find(a =>
-                a.brinco.toLowerCase() === animalBeingUpdated.maeNome!.toLowerCase().trim() &&
-                a.sexo === Sexo.Femea
-            ) : undefined;
-            
-        let motherProgenyUpdate: { motherId: string; newProgenyHistory: OffspringWeightRecord[] } | null = null;
-
-        if (mother) {
-            const progenyHistory = [...(mother.historicoProgenie || [])];
-            const progenyIndex = progenyHistory.findIndex(p => p.offspringBrinco === animalBeingUpdated.brinco);
-
-            let progenyRecordToUpdate: OffspringWeightRecord;
-            let progenyUpdated = false;
-
-            if (progenyIndex !== -1) {
-                progenyRecordToUpdate = { ...progenyHistory[progenyIndex] };
-            } else {
-                progenyRecordToUpdate = { id: `prog_${animalBeingUpdated.id}_${Date.now()}`, offspringBrinco: animalBeingUpdated.brinco };
-            }
-
-            if (latestWeaningWeight && progenyRecordToUpdate.weaningWeightKg !== latestWeaningWeight.weightKg) {
-                progenyRecordToUpdate.weaningWeightKg = latestWeaningWeight.weightKg;
-                progenyUpdated = true;
-            }
-            if (latestYearlingWeight && progenyRecordToUpdate.yearlingWeightKg !== latestYearlingWeight.weightKg) {
-                progenyRecordToUpdate.yearlingWeightKg = latestYearlingWeight.weightKg;
-                progenyUpdated = true;
-            }
-
-            if (progenyUpdated) {
-                if (progenyIndex !== -1) {
-                    progenyHistory[progenyIndex] = progenyRecordToUpdate;
-                } else {
-                    progenyHistory.push(progenyRecordToUpdate);
-                }
-                dispatch({ type: 'LOCAL_UPDATE_ANIMAL', payload: { animalId: mother.id, updatedData: { historicoProgenie: progenyHistory } } });
-                motherProgenyUpdate = { motherId: mother.id, newProgenyHistory: progenyHistory };
-            }
-        }
-    
-        const writeToDb = async () => {
-            if (!db) return;
+        const performBackgroundUpdate = async () => {
+            if (!db) return; // Guard clause for async context
             const batch = db.batch();
             const animalRef = db.collection('animals').doc(animalId);
+    
+            // 1. Handle main animal data update
             const sanitizedData = removeUndefined(updatedData);
             const dataWithTimestamp = convertDatesToTimestamps(sanitizedData);
             batch.update(animalRef, dataWithTimestamp);
-
-            if (motherProgenyUpdate) {
-                const motherRef = db.collection('animals').doc(motherProgenyUpdate.motherId);
-                batch.update(motherRef, { historicoProgenie: convertDatesToTimestamps(motherProgenyUpdate.newProgenyHistory) });
+    
+            // 2. Handle mother relationship change
+            const oldMaeNome = animalBeingUpdated.maeNome;
+            const newMaeNome = updatedData.maeNome;
+            const motherChanged = newMaeNome !== undefined && newMaeNome !== oldMaeNome;
+    
+            if (motherChanged) {
+                // Remove from old mother's progeny
+                if (oldMaeNome) {
+                    const oldMother = state.animals.find(a => a.brinco.toLowerCase() === oldMaeNome.toLowerCase().trim() && a.sexo === Sexo.Femea);
+                    if (oldMother) {
+                        const newProgenyHistory = (oldMother.historicoProgenie || []).filter(p => p.offspringBrinco !== animalBeingUpdated.brinco);
+                        batch.update(db.collection('animals').doc(oldMother.id), { historicoProgenie: newProgenyHistory });
+                        dispatch({ type: 'LOCAL_UPDATE_ANIMAL', payload: { animalId: oldMother.id, updatedData: { historicoProgenie: newProgenyHistory } } });
+                    }
+                }
+                // Add to new mother's progeny (basic record, weights will be handled next)
+                if (newMaeNome) {
+                    const newMother = state.animals.find(a => a.brinco.toLowerCase() === newMaeNome.toLowerCase().trim() && a.sexo === Sexo.Femea);
+                    if (newMother) {
+                        const progenyRecord = { id: `prog_${animalBeingUpdated.id}`, offspringBrinco: animalBeingUpdated.brinco };
+                        // Note: Using arrayUnion is simpler but makes local state updates harder.
+                        // We'll overwrite the whole array for consistency with weight updates.
+                        const newProgenyHistory = [...(newMother.historicoProgenie || []), progenyRecord];
+                        batch.update(db.collection('animals').doc(newMother.id), { historicoProgenie: newProgenyHistory });
+                        dispatch({ type: 'LOCAL_UPDATE_ANIMAL', payload: { animalId: newMother.id, updatedData: { historicoProgenie: newProgenyHistory } } });
+                    }
+                }
             }
-
+    
+            // 3. Handle progeny weight updates (on the correct mother)
+            const latestWeaningWeight = updatedData.historicoPesagens?.filter(p => p.type === WeighingType.Weaning).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+            const latestYearlingWeight = updatedData.historicoPesagens?.filter(p => p.type === WeighingType.Yearling).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+    
+            const motherForWeightUpdateName = newMaeNome !== undefined ? newMaeNome : oldMaeNome;
+    
+            if ((latestWeaningWeight || latestYearlingWeight) && motherForWeightUpdateName) {
+                const mother = state.animals.find(a => a.brinco.toLowerCase() === motherForWeightUpdateName.toLowerCase().trim() && a.sexo === Sexo.Femea);
+                if (mother) {
+                    const progenyHistory = [...(mother.historicoProgenie || [])];
+                    const progenyIndex = progenyHistory.findIndex(p => p.offspringBrinco === animalBeingUpdated.brinco);
+                    
+                    let recordNeedsUpdate = false;
+                    let record = progenyIndex > -1 ? { ...progenyHistory[progenyIndex] } : { id: `prog_${animalBeingUpdated.id}_${Date.now()}`, offspringBrinco: animalBeingUpdated.brinco };
+    
+                    if (latestWeaningWeight && record.weaningWeightKg !== latestWeaningWeight.weightKg) {
+                        record.weaningWeightKg = latestWeaningWeight.weightKg;
+                        recordNeedsUpdate = true;
+                    }
+                    if (latestYearlingWeight && record.yearlingWeightKg !== latestYearlingWeight.weightKg) {
+                        record.yearlingWeightKg = latestYearlingWeight.weightKg;
+                        recordNeedsUpdate = true;
+                    }
+    
+                    if (recordNeedsUpdate) {
+                        if (progenyIndex > -1) {
+                            progenyHistory[progenyIndex] = record;
+                        } else {
+                            progenyHistory.push(record);
+                        }
+                        batch.update(db.collection('animals').doc(mother.id), { historicoProgenie: convertDatesToTimestamps(progenyHistory) });
+                        dispatch({ type: 'LOCAL_UPDATE_ANIMAL', payload: { animalId: mother.id, updatedData: { historicoProgenie: progenyHistory } } });
+                    }
+                }
+            }
+    
             try {
                 await batch.commit();
             } catch (error) {
                 console.error("Falha na transação de atualização do animal em segundo plano:", error);
-                dispatch({ type: 'SET_ERROR', payload: `Falha ao sincronizar dados do animal ${animalId}. Por favor, recarregue a página.` });
+                dispatch({ type: 'SET_ERROR', payload: `Falha ao sincronizar dados do animal ${animalId}. Por favor, recarregue.` });
             }
         };
-        
-        writeToDb();
+    
+        performBackgroundUpdate();
     }, [userId, state.animals]);
 
 

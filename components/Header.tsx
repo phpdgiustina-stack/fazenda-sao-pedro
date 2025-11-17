@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { DocumentChartBarIcon, SparklesIcon, PlusIcon, CalendarDaysIcon, ClipboardDocumentCheckIcon, MapPinIcon } from './common/Icons';
-// FIX: Centralized Firebase imports. Now importing everything from the single source of truth.
 import { AppUser } from '../types';
+import { auth } from '../services/firebase'; // Import auth service
 
 type ViewType = 'dashboard' | 'reports' | 'calendar' | 'tasks' | 'management';
 
@@ -9,7 +10,6 @@ interface HeaderProps {
     currentView: ViewType;
     setCurrentView: (view: ViewType) => void;
     onAddAnimalClick: () => void;
-    // FIX: Corrected the type for the Firebase user object to `firebase.auth.User`.
     user: AppUser;
 }
 
@@ -27,9 +27,9 @@ const Header: React.FC<HeaderProps> = ({ currentView, setCurrentView, onAddAnima
   );
 
   const handleLogout = () => {
-    // With mock authentication, logout is disabled.
-    // In a real app, this would be: auth.signOut();
-    alert("O logout está desabilitado no modo de demonstração.");
+    if (auth) {
+      auth.signOut();
+    }
   };
 
   return (
@@ -67,7 +67,10 @@ const Header: React.FC<HeaderProps> = ({ currentView, setCurrentView, onAddAnima
                 <span className="hidden sm:inline ml-2">Cadastrar</span>
             </button>
              <div className="ml-4 flex items-center">
-                <span className="text-sm text-gray-300 hidden lg:block">Olá, {user.displayName?.split(' ')[0]}</span>
+                <span className="text-sm text-gray-300 hidden lg:block mr-3">Olá, {user.displayName?.split(' ')[0]}</span>
+                {user.photoURL && (
+                    <img src={user.photoURL} alt="Foto do usuário" className="w-8 h-8 rounded-full" />
+                )}
                 <button onClick={handleLogout} className="ml-3 text-sm text-gray-400 hover:text-white" title="Sair">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
