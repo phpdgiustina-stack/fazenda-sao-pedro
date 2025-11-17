@@ -143,14 +143,22 @@ const RootComponent = () => {
         .catch((error: any) => {
             if (!isMounted) return;
             console.error("Erro no login por redirecionamento:", error);
-            if (error.code === 'auth/operation-not-supported-in-this-environment') {
-                 // Este é um erro de ambiente, não apenas um erro de login.
-                 setEnvironmentError(`Ocorreu um erro de ambiente durante o login: ${error.message}. Por favor, verifique se está usando um servidor web e se o armazenamento está ativo.`);
-            } else if (error.code === 'auth/account-exists-with-different-credential') {
-                setLoginRedirectError("Já existe uma conta com este e-mail, mas usando um método de login diferente.");
-            } else {
-                setLoginRedirectError("Ocorreu um erro durante o login. Por favor, tente novamente.");
+            
+            let userFriendlyError = `Falha no login (código: ${error.code || 'desconhecido'}). Verifique o console para mais detalhes ou tente novamente.`;
+
+            switch (error.code) {
+                case 'auth/unauthorized-domain':
+                    userFriendlyError = "Este domínio não está autorizado. No Console do Firebase, vá para Authentication > Sign-in method e adicione o domínio do seu site (ex: seu-app.netlify.app) à lista de 'Domínios autorizados'.";
+                    break;
+                case 'auth/operation-not-supported-in-this-environment':
+                     setEnvironmentError(`Ocorreu um erro de ambiente durante o login: ${error.message}. Por favor, verifique se está usando um servidor web e se o armazenamento está ativo.`);
+                     return; // Usa a tela de erro de ambiente, que é mais apropriada.
+                case 'auth/account-exists-with-different-credential':
+                    userFriendlyError = "Já existe uma conta com este e-mail, mas usando um método de login diferente (ex: E-mail e Senha).";
+                    break;
             }
+
+            setLoginRedirectError(userFriendlyError);
         });
     
     const unsubscribe = auth.onAuthStateChanged((firebaseUser: any) => {
